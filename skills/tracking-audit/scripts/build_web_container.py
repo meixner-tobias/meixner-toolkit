@@ -76,11 +76,17 @@ def pruefe_param(pfad):
     return pfad
 
 
-def pruefe_server_url(url, resolver=None):
+def pruefe_server_url(url, resolver=None, dns_pending=False):
     """server_container_url: nur https und global erreichbare Zieladressen.
 
     ``resolver`` ist fuer hermetische Tests injizierbar und liefert IP-Strings bzw.
     ``ipaddress``-Objekte. Im Produktivpfad wird ``socket.getaddrinfo`` verwendet.
+
+    ``dns_pending=True`` ueberspringt ausschliesslich die Namensaufloesung, fuer den Fall
+    dass die Custom Domain beim Hoster beantragt, der CNAME aber noch nicht gesetzt ist.
+    Schema-, Zugangsdaten- und Hostpruefung bleiben aktiv. Ein literales IP-Ziel wird
+    weiterhin auf globale Erreichbarkeit geprueft - dafuer kann es keinen wartenden
+    DNS-Eintrag geben.
     """
     import ipaddress
     import socket
@@ -98,6 +104,8 @@ def pruefe_server_url(url, resolver=None):
             direkt = ipaddress.ip_address(host)
             raw_ips = [direkt]
         except ValueError:
+            if dns_pending:
+                return url
             raw_ips = (resolver(host) if resolver is not None
                        else [ai[4][0] for ai in socket.getaddrinfo(host, None)])
         ips = {ip if isinstance(ip, (ipaddress.IPv4Address, ipaddress.IPv6Address))
@@ -164,9 +172,11 @@ def table(key, rows, kname="parameter", vname="parameterValue"):
 
 
 class Builder:
-    def __init__(self, plan, consent_settings=True, allow_placeholder=False, server_resolver=None):
+    def __init__(self, plan, consent_settings=True, allow_placeholder=False, server_resolver=None,
+                 server_dns_pending=False):
         self.allow_placeholder = allow_placeholder
         self.server_resolver = server_resolver
+        self.server_dns_pending = server_dns_pending
         self.plan, self.cs = plan, consent_settings
         self.tags, self.triggers, self.vars = [], [], []
         self._id = 10
@@ -274,7 +284,12 @@ class Builder:
                 "Entweder server_container_url entfernen oder architecture auf "
                 "'server' bzw. 'browser+server' setzen.")
         if sgtm:
-            pruefe_server_url(sgtm, self.server_resolver)
+            pruefe_server_url(sgtm, self.server_resolver, dns_pending=self.server_dns_pending)
+            if self.server_dns_pending:
+                self.warnings.append(
+                    "server_container_url %s wurde NICHT aufgeloest (--server-dns-pending). "
+                    "Vor dem Veroeffentlichen pruefen, dass der CNAME steht und der "
+                    "Server-Container antwortet." % sgtm)
         self.arch = arch
 
         # --- Consent-Modus (Phase 4E) ---
@@ -461,6 +476,10 @@ def main():
     ap.add_argument("--allow-placeholder", action="store_true",
                     help="Beispiel-IDs wie G-XXXXXXXXXX zulassen (nur fuer Tests)")
     ap.add_argument("--no-consent-settings", action="store_true", help="keine zusätzlichen Einwilligungsprüfungen an Meta-Tags setzen")
+    ap.add_argument("--server-dns-pending", action="store_true",
+                    help="Namensaufloesung der server_container_url ueberspringen, wenn die "
+                         "Custom Domain beantragt, der CNAME aber noch nicht gesetzt ist. "
+                         "Erzeugt eine Warnung; vor dem Veroeffentlichen pruefen.")
     a = ap.parse_args()
     plan = json.load(open(a.plan, encoding="utf-8"))
     try:
@@ -469,7 +488,8 @@ def main():
     except ValueError as e:
         sys.exit(str(e))
     b = Builder(plan, consent_settings=not a.no_consent_settings,
-                allow_placeholder=a.allow_placeholder)
+                allow_placeholder=a.allow_placeholder,
+                server_dns_pending=a.server_dns_pending)
     req = plan.get("requirements") or {}
     if req.get("internal_traffic") == "filter":
         b.warnings.append("GA4 Internal-Traffic-Definition/Data-Filter ist eine GA4-Admin-Einstellung und nicht Bestandteil dieses GTM-JSON.")

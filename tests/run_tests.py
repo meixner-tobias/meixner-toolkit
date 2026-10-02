@@ -393,6 +393,43 @@ def test_builder():
     except gen_mod.PlanError:
         pruefe("sGTM Shared Address Space wird abgelehnt", True)
 
+    # --server-dns-pending: nur die Namensaufloesung entfaellt, sonst nichts.
+    def _kein_dns(host):
+        raise OSError("nodename nor servname provided")
+
+    try:
+        gen_mod.pruefe_server_url("https://next.example.test/", resolver=_kein_dns)
+        pruefe("ohne dns_pending blockiert ein nicht aufloesbarer Host", False, "wurde akzeptiert")
+    except gen_mod.PlanError:
+        pruefe("ohne dns_pending blockiert ein nicht aufloesbarer Host", True)
+
+    try:
+        r = gen_mod.pruefe_server_url("https://next.example.test/", resolver=_kein_dns, dns_pending=True)
+        pruefe("dns_pending laesst einen noch nicht gesetzten CNAME zu", r == "https://next.example.test/")
+    except gen_mod.PlanError as e:
+        pruefe("dns_pending laesst einen noch nicht gesetzten CNAME zu", False, repr(e))
+
+    try:
+        gen_mod.pruefe_server_url("http://next.example.test/", resolver=_kein_dns, dns_pending=True)
+        pruefe("dns_pending hebt die https-Pflicht nicht auf", False, "http wurde akzeptiert")
+    except gen_mod.PlanError:
+        pruefe("dns_pending hebt die https-Pflicht nicht auf", True)
+
+    try:
+        gen_mod.pruefe_server_url("https://10.0.0.5/", dns_pending=True)
+        pruefe("dns_pending erlaubt keine private IP als Ziel", False, "10.0.0.5 wurde akzeptiert")
+    except gen_mod.PlanError:
+        pruefe("dns_pending erlaubt keine private IP als Ziel", True)
+
+    try:
+        gen_mod.pruefe_server_url("https://u:p@next.example.test/", resolver=_kein_dns, dns_pending=True)
+        pruefe("dns_pending erlaubt keine Zugangsdaten in der URL", False, "akzeptiert")
+    except gen_mod.PlanError:
+        pruefe("dns_pending erlaubt keine Zugangsdaten in der URL", True)
+
+    pruefe("--server-dns-pending ist als CLI-Schalter dokumentiert",
+           "--server-dns-pending" in (ROOT / "skills/tracking-audit/scripts/build_web_container.py").read_text(encoding="utf-8"))
+
     boese = [
         ("meta_event mit Code", {"events": [{"name": "e", "meta_event": "L'); alert(1); //"}]}),
         ("value als JS-Ausdruck", {"events": [{"name": "e", "meta_event": "Lead", "value": "1;alert(1)"}]}),
@@ -943,8 +980,8 @@ if __name__ == "__main__":
                     print("\nABBRUCH: Testblock %s fehlgeschlagen." % fn.__name__, file=sys.stderr)
                     sys.exit(rc or 1)
         print("\nFull regression: %d/%d bestanden, %d fehlgeschlagen." % (passed, total, failed))
-        if total != 221:
-            print("ABBRUCH: Erwartet wurden 221 Regressionstests, erhalten: %d." % total, file=sys.stderr)
+        if total != 227:
+            print("ABBRUCH: Erwartet wurden 227 Regressionstests, erhalten: %d." % total, file=sys.stderr)
             sys.exit(3)
         sys.exit(0 if failed == 0 and passed == total else 1)
 

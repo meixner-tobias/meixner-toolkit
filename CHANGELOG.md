@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.13 — 02.10.2026
+
+### Build
+- `build_web_container.py` kennt `--server-dns-pending`. Ist die sGTM-Custom-Domain beim Hoster beantragt, der CNAME aber noch nicht gesetzt, liess sich bisher kein Container bauen – ein in der Praxis haeufiger Fall, wenn der DNS-Zugang beim Kunden liegt. Der Schalter ueberspringt ausschliesslich die Namensaufloesung und erzeugt eine Warnung.
+- Unveraendert streng bleiben: https-Pflicht, Verbot von Zugangsdaten in der URL, Hostpruefung und die Globalitaetspruefung bei literalen IP-Zielen. Fuer eine IP kann es keinen wartenden DNS-Eintrag geben, deshalb greift dort weiterhin der volle Schutz.
+- Sechs Regressionstests sichern ab, dass der Schalter nur die Aufloesung lockert; die Gesamterwartung steigt von 221 auf 227.
+
 ## 0.7.12 — 02.10.2026
 
 ### Auslieferung an fremde Nutzer
