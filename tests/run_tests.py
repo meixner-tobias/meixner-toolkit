@@ -430,6 +430,35 @@ def test_builder():
     pruefe("--server-dns-pending ist als CLI-Schalter dokumentiert",
            "--server-dns-pending" in (ROOT / "skills/tracking-audit/scripts/build_web_container.py").read_text(encoding="utf-8"))
 
+    # link_listeners: tel:/mailto:-Klicks werden zu dataLayer-Events.
+    ll_plan = {"ga4": {"measurement_id": "G-ABCDEF1234"},
+               "consent": {"mode": "basic"},
+               "link_listeners": {"tel": "click_to_call", "mailto": "contact_email"},
+               "events": [{"name": "click_to_call"}, {"name": "contact_email"}]}
+    try:
+        out = gen_mod.Builder(ll_plan).build()
+        tags = [x for x in out["containerVersion"]["tag"] if x["name"] == "Listener - Kontaktlinks"]
+        htm = ""
+        if tags:
+            htm = [p2["value"] for p2 in tags[0]["parameter"] if p2["key"] == "html"][0]
+        pruefe("link_listeners erzeugt genau ein Listener-Tag", len(tags) == 1, len(tags))
+        pruefe("link_listeners pusht beide Eventnamen",
+               '"click_to_call"' in htm and '"contact_email"' in htm)
+        pruefe("link_listeners delegiert auf document statt auf einzelne Links",
+               "addEventListener('click'" in htm and ".closest(" in htm)
+    except Exception as e:
+        pruefe("link_listeners erzeugt genau ein Listener-Tag", False, repr(e))
+
+    for fall, wert in [("kein Objekt", ["tel"]), ("unbekanntes Schema", {"sms": "x"}),
+                       ("ungueltiger Eventname", {"tel": "nicht gueltig!"})]:
+        try:
+            gen_mod.Builder({"ga4": {"measurement_id": "G-ABCDEF1234"},
+                             "consent": {"mode": "basic"},
+                             "link_listeners": wert, "events": []}).build()
+            pruefe("link_listeners lehnt ab: " + fall, False, "akzeptiert")
+        except gen_mod.PlanError:
+            pruefe("link_listeners lehnt ab: " + fall, True)
+
     boese = [
         ("meta_event mit Code", {"events": [{"name": "e", "meta_event": "L'); alert(1); //"}]}),
         ("value als JS-Ausdruck", {"events": [{"name": "e", "meta_event": "Lead", "value": "1;alert(1)"}]}),
@@ -980,8 +1009,8 @@ if __name__ == "__main__":
                     print("\nABBRUCH: Testblock %s fehlgeschlagen." % fn.__name__, file=sys.stderr)
                     sys.exit(rc or 1)
         print("\nFull regression: %d/%d bestanden, %d fehlgeschlagen." % (passed, total, failed))
-        if total != 227:
-            print("ABBRUCH: Erwartet wurden 227 Regressionstests, erhalten: %d." % total, file=sys.stderr)
+        if total != 233:
+            print("ABBRUCH: Erwartet wurden 233 Regressionstests, erhalten: %d." % total, file=sys.stderr)
             sys.exit(3)
         sys.exit(0 if failed == 0 and passed == total else 1)
 

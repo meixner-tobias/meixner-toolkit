@@ -437,6 +437,45 @@ class Builder:
             self.tag("Listener - Formular-Erfolg -> " + lead_event, "html", [T("html", html), B("supportDocumentWrite", False)],
                      [self.domready_trigger()])
 
+        # Link-Listener: tel:/mailto:-Klicks als dataLayer-Events.
+        # Delegiert auf document, damit auch nachtraeglich eingefuegte Links greifen.
+        link_listeners = p.get("link_listeners") or {}
+        if link_listeners:
+            if not isinstance(link_listeners, dict):
+                raise PlanError(
+                    "link_listeners muss ein Objekt sein, z. B. "
+                    '{"tel": "click_to_call", "mailto": "contact_email"}.')
+            erlaubt = {"tel", "mailto"}
+            unbekannt = sorted(set(link_listeners) - erlaubt)
+            if unbekannt:
+                raise PlanError("link_listeners kennt nur %s (erhalten: %s)."
+                                % (", ".join(sorted(erlaubt)), ", ".join(unbekannt)))
+            paare = []
+            for schema in sorted(link_listeners):
+                ev = need_str("link_listeners.%s" % schema, link_listeners[schema],
+                              EVENT_NAME, "Buchstaben, Ziffern, Unterstrich")
+                paare.append("    if (h.indexOf(%s) === 0) { push(%s, h); return; }"
+                             % (js(schema + ":"), js(ev)))
+            sel = ", ".join('a[href^="%s:"]' % s for s in sorted(link_listeners))
+            html = (
+                "<script>\n"
+                "window.dataLayer = window.dataLayer || [];\n"
+                "(function () {\n"
+                "  function push(ev, href) { window.dataLayer.push({event: ev, link_url: href}); }\n"
+                "  document.addEventListener('click', function (e) {\n"
+                "    var t = e.target;\n"
+                "    if (!t || !t.closest) { return; }\n"
+                "    var a = t.closest(%s);\n"
+                "    if (!a) { return; }\n"
+                "    var h = a.getAttribute('href') || '';\n"
+                "%s\n"
+                "  }, true);\n"
+                "})();\n"
+                "</script>" % (js(sel), "\n".join(paare)))
+            self.tag("Listener - Kontaktlinks", "html",
+                     [T("html", html), B("supportDocumentWrite", False)],
+                     [self.domready_trigger()])
+
         return {
             "exportFormatVersion": 2,
             "exportTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

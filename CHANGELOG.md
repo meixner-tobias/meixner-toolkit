@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.14 — 02.10.2026
+
+### Build
+- `build_web_container.py` kennt `link_listeners`, z. B. `{"tel": "click_to_call", "mailto": "contact_email"}`. Bisher liess sich fuer Telefon- und E-Mail-Klicks zwar ein Event im Plan anlegen, aber nichts im Container hat es je gepusht – die Trigger warteten auf dataLayer-Events ohne Absender. Fuer Lead-Websites ohne Shop ist der Telefonklick oft die wichtigste Conversion.
+- Der erzeugte Listener delegiert auf `document` und nutzt `closest()`, erfasst also auch nachtraeglich eingefuegte Links; ohne jQuery-Abhaengigkeit.
+- Unbekannte Schemata, Nicht-Objekte und ungueltige Eventnamen werden abgelehnt statt still ignoriert.
+- Sechs Regressionstests; Gesamterwartung steigt von 227 auf 233.
+
 ## 0.7.13 — 02.10.2026
 
 ### Build
