@@ -59,3 +59,41 @@ python3 "${CLAUDE_SKILL_DIR}/scripts/validate_container.py" <datei>.json
 Prueft Trigger-Referenzen gegen den richtigen Container-Typ, Variablen-Referenzen,
 ID-Eindeutigkeit, das Format von `conversionId`/`conversionLabel`, unersetzte
 Referenz-Platzhalter und ob ein SERVER-Container einen Client hat.
+
+## Container-Einstellungen werden beim Import NICHT uebernommen
+
+Der `container`-Block eines Exports beschreibt den **Ursprungscontainer**. Beim Import
+liest GTM daraus nichts: uebernommen werden Tags, Trigger, Variablen, Clients, Ordner
+und Templates – nicht Name, nicht `taggingServerUrls`, nicht sonstige Containerdaten.
+
+Beobachtet: eine Importdatei mit gesetztem `taggingServerUrls` erzeugte nach dem Import
+ein **leeres** Feld unter *Verwaltung → Container-Einstellungen → Server container URLs*.
+Der Wert musste dort von Hand eingetragen werden.
+
+So sieht der Block in einem Export aus – zur Orientierung, nicht zum Befuellen:
+
+```json
+"container": {
+  "name": "<kunde>.de || Server",
+  "publicId": "GTM-XXXXXXX",
+  "usageContext": ["SERVER"],
+  "taggingServerUrls": ["https://<subdomain>.<kunde>.de"]
+}
+```
+
+`taggingServerUrls` darf im Generat trotzdem stehen: es dokumentiert, wogegen der
+Container gebaut wurde, und stoert beim Import nicht. Verlassen darf man sich nicht
+darauf.
+
+**Pflicht nach jedem Import eines Server-Containers**, in dieser Reihenfolge:
+
+1. *Verwaltung → Container-Einstellungen → Server container URLs*: Tagging-Server-URL
+   eintragen (`https://<subdomain>.<kunde>.de`). Ohne sie nimmt der Container keine
+   Requests an.
+2. *Tag → Google Analytics: GA4* anlegen, Ausloeser „Alle Events". Der Client nimmt
+   Requests entgegen, weiterleiten muss ein Tag.
+3. Erst dann Vorschau und Veroeffentlichung.
+
+Dasselbe gilt im Web-Container fuer Kontoeinstellungen: Ads-Kundendatenbedingungen,
+GA4 Key Events, Datenfilter und unerwuenschte Verweise liegen ausserhalb von GTM und
+koennen von keinem Import gesetzt werden.

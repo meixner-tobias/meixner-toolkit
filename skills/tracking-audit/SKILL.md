@@ -133,6 +133,12 @@ Aus der Referenz abgeleitete `masters/core/*.candidate.json` enthalten nur neutr
 > getrennt vergeben kollidieren sie. Details und Belege: `references/server-container.md`.
 > Vor jedem Import pruefen (Pflicht, auch fuer generierte Dateien):
 > `python3 "${CLAUDE_SKILL_DIR}/scripts/validate_container.py" <datei>.json`
+>
+> **Container-Einstellungen importiert GTM nicht.** Der `container`-Block beschreibt
+> den Ursprungscontainer; `taggingServerUrls`, Name und Konto-IDs werden beim Import
+> verworfen. Nach dem Import eines Server-Containers deshalb immer ansagen:
+> *Verwaltung → Container-Einstellungen → Server container URLs* eintragen, sonst
+> nimmt der Container keine Requests an.
 
 0. **Reference Guard:** `python3 "${CLAUDE_SKILL_DIR}/scripts/reference_guard.py"`. Bei Fehler abbrechen; nie auf rohe/private GTM-Exporte aus dem Plugin zurueckfallen.
 1. **Eventplan zuerst:** reales Success-/Interaktionssignal je Event verifizieren; danach Pattern waehlen. `purchase`, `start_trial`, Lead/Booking, Newsletter, Scroll und Custom Completion haben bewusst unterschiedliche Regeln in `masters/patterns/event-patterns.json`. Engagement-Events werden **nicht automatisch** Ads-/Meta-Conversions.

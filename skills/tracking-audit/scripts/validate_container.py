@@ -102,6 +102,28 @@ def pruefe(export):
     return f
 
 
+def hinweise(export):
+    """Schritte, die kein Import setzen kann und die deshalb leicht vergessen werden."""
+    cv = export.get("containerVersion") or {}
+    ctx = ((cv.get("container") or {}).get("usageContext") or [""])[0].upper()
+    h = []
+    if ctx == "SERVER":
+        urls = (cv.get("container") or {}).get("taggingServerUrls") or []
+        h.append("Verwaltung -> Container-Einstellungen -> Server container URLs eintragen"
+                 + (" (im Export steht: %s)" % ", ".join(urls) if urls else "")
+                 + ". Container-Einstellungen werden beim Import NICHT uebernommen.")
+        typen = {t.get("type") for t in cv.get("tag") or []}
+        if not (typen & {"sgtmgaaw", "gaaw"}):
+            h.append("Kein GA4-Tag im Container: der Client nimmt Requests an, weiterleiten "
+                     "muss ein Tag. In GTM anlegen ueber Tag -> Google Analytics: GA4, "
+                     "Ausloeser 'Alle Events'.")
+    if ctx == "WEB":
+        h.append("Kontoeinstellungen liegen ausserhalb von GTM: Ads-Kundendatenbedingungen, "
+                 "GA4 Key Events, Datenfilter, unerwuenschte Verweise.")
+    h.append("Nach dem Import: Vorschau pruefen, erst danach veroeffentlichen.")
+    return h
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -114,11 +136,12 @@ def main():
         sys.exit("Datei nicht lesbar: %s" % e)
 
     fehler = pruefe(export)
+    tipps = hinweise(export)
     cv = export.get("containerVersion") or {}
     ctx = ((cv.get("container") or {}).get("usageContext") or ["?"])[0]
     if a.json:
-        print(json.dumps({"ok": not fehler, "usageContext": ctx, "fehler": fehler},
-                         ensure_ascii=False, indent=2))
+        print(json.dumps({"ok": not fehler, "usageContext": ctx, "fehler": fehler,
+                          "hinweise": tipps}, ensure_ascii=False, indent=2))
     else:
         print("%s: %s, %d Tags, %d Trigger, %d Variablen"
               % (a.container, ctx, len(cv.get("tag") or []),
@@ -129,6 +152,10 @@ def main():
                 print("  - " + x)
         else:
             print("OK: keine Befunde.")
+        if tipps:
+            print("\nNACH DEM IMPORT:")
+            for x in tipps:
+                print("  - " + x)
     sys.exit(2 if fehler else 0)
 
 

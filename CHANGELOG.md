@@ -1,12 +1,24 @@
 # Changelog
 
+## 0.7.17 — 02.10.2026
+
+### Container-Einstellungen
+- Festgehalten, dass GTM beim Import **keine** Container-Einstellungen uebernimmt. Der `container`-Block eines Exports beschreibt den Ursprungscontainer; `taggingServerUrls`, Name und Konto-IDs werden verworfen. Beobachtet an einem Import mit gesetzter `taggingServerUrls`: das Feld *Verwaltung → Container-Einstellungen → Server container URLs* war danach leer.
+- `validate_container.py` gibt jetzt zusaetzlich zu den Fehlern die Schritte aus, die kein Import setzen kann: Server container URL eintragen, GA4-Tag anlegen, Vorschau vor dem Veroeffentlichen. Bei WEB stattdessen der Hinweis auf Kontoeinstellungen ausserhalb von GTM.
+- `references/server-container.md` und der Warnblock in `SKILL.md` ergaenzt.
+
+### Hygiene
+- Eine echte Google-Ads-Conversion-ID war als Beispiel in CHANGELOG und Testfixture gelandet. Durch eine erkennbar erfundene Nummer ersetzt. Kundenwerte gehoeren nach `masters/REFERENCE-POLICY.md` nie in dieses Repository, auch nicht als Beispiel.
+
+- Sechs Regressionstests; Gesamterwartung steigt von 248 auf 254.
+
 ## 0.7.16 — 02.10.2026
 
 ### Server-Container: drei Importfehler abgefangen
 Beim ersten von Hand gebauten Server-Container traten nacheinander drei Fehler auf, die alle dieselbe Ursache hatten – Web-Konventionen wurden auf den Server-Container uebertragen:
 
 1. Eingebauter Trigger `2147479553`/`2147479573` statt `2147479574`. GTM: *„Tag references an unknown trigger"*.
-2. `conversionId` als `AW-18326974194` im `sgtmadsct`-Tag. GTM: *„File format is invalid / The value must be a positive integer or 0"*. Der Servertag will die nackte Zahl.
+2. `conversionId` als `AW-12345678901` im `sgtmadsct`-Tag. GTM: *„File format is invalid / The value must be a positive integer or 0"*. Der Servertag will die nackte Zahl.
 3. `tagId` und `triggerId` getrennt gezaehlt und dadurch kollidiert. GTM-Exporte vergeben alle IDs aus einem gemeinsamen Zaehlraum; syntaktisch faellt das nicht auf.
 
 ### Neu
