@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.16 — 02.10.2026
+
+### Server-Container: drei Importfehler abgefangen
+Beim ersten von Hand gebauten Server-Container traten nacheinander drei Fehler auf, die alle dieselbe Ursache hatten – Web-Konventionen wurden auf den Server-Container uebertragen:
+
+1. Eingebauter Trigger `2147479553`/`2147479573` statt `2147479574`. GTM: *„Tag references an unknown trigger"*.
+2. `conversionId` als `AW-18326974194` im `sgtmadsct`-Tag. GTM: *„File format is invalid / The value must be a positive integer or 0"*. Der Servertag will die nackte Zahl.
+3. `tagId` und `triggerId` getrennt gezaehlt und dadurch kollidiert. GTM-Exporte vergeben alle IDs aus einem gemeinsamen Zaehlraum; syntaktisch faellt das nicht auf.
+
+### Neu
+- `scripts/validate_container.py` prueft einen beliebigen Container-Export vor dem Import: Trigger-Referenzen gegen den **richtigen** Container-Typ, Variablen-Referenzen, ID-Eindeutigkeit, Format von `conversionId`/`conversionLabel` je Tag-Typ, unersetzte Referenz-Platzhalter, Client-Pflicht im SERVER-Container.
+- `references/server-container.md` haelt die belegten Werte und die drei Fallstricke fest, mit Herkunft je Wert.
+- Der Build-Abschnitt in `SKILL.md` beginnt jetzt mit einem Warnblock dazu und macht den Pruefschritt vor jedem Import verbindlich – auch fuer generierte Dateien.
+- Acht Regressionstests, je einer pro realem Fehler; Gesamterwartung steigt von 240 auf 248.
+
 ## 0.7.15 — 02.10.2026
 
 ### Build

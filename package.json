@@ -1,6 +1,6 @@
 {
   "name": "meixner-toolkit",
-  "version": "0.7.15",
+  "version": "0.7.16",
   "private": true,
   "description": "Laufzeitabhaengigkeiten der Skripte in skills/*/scripts",
   "engines": {

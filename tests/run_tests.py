@@ -486,6 +486,62 @@ def test_builder():
         except gen_mod.PlanError:
             pruefe("timer_events lehnt ab: " + fall, True)
 
+    # ---- validate_container.py: die drei real aufgetretenen Importfehler ----
+    vc = modul("skills/tracking-audit/scripts/validate_container.py", "validate_container")
+
+    def server(tags=None, trigger=None, client=True):
+        return {"exportFormatVersion": 2, "containerVersion": {
+            "container": {"usageContext": ["SERVER"]},
+            "client": ([{"clientId": "1", "type": "gaaw_client", "name": "GA4"}] if client else []),
+            "tag": tags or [], "trigger": trigger or [], "variable": []}}
+
+    def ads(tagid, trig, cid="18326974194"):
+        return {"tagId": tagid, "name": "Ads", "type": "sgtmadsct",
+                "parameter": [{"key": "conversionId", "value": cid},
+                              {"key": "conversionLabel", "value": "AbC_123-x"}],
+                "firingTriggerId": [trig]}
+
+    linker = {"tagId": "1", "name": "Linker", "type": "sgtmadscl",
+              "parameter": [], "firingTriggerId": ["2147479573"]}
+    f = vc.pruefe(server(tags=[linker]))
+    pruefe("validate_container erkennt den WEB-Trigger im SERVER-Container",
+           any("anderen Container-Typs" in x for x in f), f)
+
+    f = vc.pruefe(server(tags=[ads("2", "5", cid="AW-18326974194")],
+                         trigger=[{"triggerId": "5", "name": "CE"}]))
+    pruefe("validate_container erkennt AW--Praefix im Servertag",
+           any("falsche Format" in x for x in f), f)
+
+    f = vc.pruefe(server(tags=[ads("4", "4")], trigger=[{"triggerId": "4", "name": "CE"}]))
+    pruefe("validate_container erkennt kollidierende tagId/triggerId",
+           any("Doppelte IDs" in x for x in f), f)
+
+    f = vc.pruefe(server(tags=[ads("2", "5")], trigger=[{"triggerId": "5", "name": "CE"}], client=False))
+    pruefe("validate_container erkennt SERVER-Container ohne Client",
+           any("ohne Client" in x for x in f), f)
+
+    f = vc.pruefe(server(tags=[ads("2", "5")], trigger=[{"triggerId": "5", "name": "CE"}]))
+    pruefe("validate_container meldet einen korrekten SERVER-Container als sauber", f == [], f)
+
+    web_ok = {"exportFormatVersion": 2, "containerVersion": {
+        "container": {"usageContext": ["WEB"]},
+        "tag": [{"tagId": "1", "name": "Ads", "type": "awct",
+                 "parameter": [{"key": "conversionId", "value": "AW-18326974194"},
+                               {"key": "conversionLabel", "value": "AbC_123"}],
+                 "firingTriggerId": ["2147479573"]}],
+        "trigger": [], "variable": []}}
+    pruefe("validate_container meldet einen korrekten WEB-Container als sauber",
+           vc.pruefe(web_ok) == [], vc.pruefe(web_ok))
+
+    web_bad = json.loads(json.dumps(web_ok))
+    web_bad["containerVersion"]["tag"][0]["parameter"][0]["value"] = "18326974194"
+    pruefe("validate_container erkennt fehlendes AW- im Browser-Tag",
+           any("falsche Format" in x for x in vc.pruefe(web_bad)))
+
+    bad_ph = server(tags=[ads("2", "5", cid="18326974194")], trigger=[{"triggerId": "5", "name": "__REFERENCE_X__"}])
+    pruefe("validate_container erkennt unersetzte Referenz-Platzhalter",
+           any("Platzhalter" in x for x in vc.pruefe(bad_ph)))
+
     boese = [
         ("meta_event mit Code", {"events": [{"name": "e", "meta_event": "L'); alert(1); //"}]}),
         ("value als JS-Ausdruck", {"events": [{"name": "e", "meta_event": "Lead", "value": "1;alert(1)"}]}),
@@ -1036,8 +1092,8 @@ if __name__ == "__main__":
                     print("\nABBRUCH: Testblock %s fehlgeschlagen." % fn.__name__, file=sys.stderr)
                     sys.exit(rc or 1)
         print("\nFull regression: %d/%d bestanden, %d fehlgeschlagen." % (passed, total, failed))
-        if total != 240:
-            print("ABBRUCH: Erwartet wurden 240 Regressionstests, erhalten: %d." % total, file=sys.stderr)
+        if total != 248:
+            print("ABBRUCH: Erwartet wurden 248 Regressionstests, erhalten: %d." % total, file=sys.stderr)
             sys.exit(3)
         sys.exit(0 if failed == 0 and passed == total else 1)
 

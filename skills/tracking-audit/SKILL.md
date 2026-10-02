@@ -125,6 +125,15 @@ Aus der Referenz abgeleitete `masters/core/*.candidate.json` enthalten nur neutr
 
 ## 6. Build
 
+> **Server-Container sind keine Web-Container.** Drei Werte unterscheiden sich, und alle
+> drei erzeugen beim Import Fehler, wenn man sie aus einem Web-Container uebernimmt:
+> eingebauter Trigger `2147479574` statt `2147479573`; `conversionId` im `sgtmadsct`-Tag
+> **ohne** `AW-`-Praefix (nur Ziffern); ein SERVER-Container braucht mindestens einen
+> Client. Ausserdem teilen sich `tagId`, `triggerId` und `variableId` **einen** Zaehlraum –
+> getrennt vergeben kollidieren sie. Details und Belege: `references/server-container.md`.
+> Vor jedem Import pruefen (Pflicht, auch fuer generierte Dateien):
+> `python3 "${CLAUDE_SKILL_DIR}/scripts/validate_container.py" <datei>.json`
+
 0. **Reference Guard:** `python3 "${CLAUDE_SKILL_DIR}/scripts/reference_guard.py"`. Bei Fehler abbrechen; nie auf rohe/private GTM-Exporte aus dem Plugin zurueckfallen.
 1. **Eventplan zuerst:** reales Success-/Interaktionssignal je Event verifizieren; danach Pattern waehlen. `purchase`, `start_trial`, Lead/Booking, Newsletter, Scroll und Custom Completion haben bewusst unterschiedliche Regeln in `masters/patterns/event-patterns.json`. Engagement-Events werden **nicht automatisch** Ads-/Meta-Conversions.
 2. **Web-Container**: `python3 "${CLAUDE_SKILL_DIR}/scripts/build_web_container.py" plan.json -o gtm-web-import.json` (Selbstprüfung eingebaut). Die Production Reference dient nur als Struktur-Gegenprobe. Wenn Cross-Domain erforderlich ist, den Direktgenerator **nicht** verwenden – nur einen real verifizierten Master, der diese Konfiguration nachweislich enthaelt. SPA/Hybrid nur mit verifizierter `dataLayer_page_view`-Strategie und explizitem `page_view`-Event.
@@ -132,7 +141,8 @@ Aus der Referenz abgeleitete `masters/core/*.candidate.json` enthalten nur neutr
 4. **Google Ads Server-Side:** bei serverseitiger Conversion-Messung keine aequivalente Browser-Ads-Conversion still parallel erzeugen. ID/Label aus dem Kundenkonto; Wert/Waehrung/Transaction-ID aus verifiziertem Eventvertrag, nicht aus Referenzwerten.
 5. **Meta:** CAPI-Token nie im Chat/Git. Browser+Server nur mit identischem realen Eventnamen + derselben `event_id` deduplizieren. `adStorageConsent=optional`, `inherit` und andere im Referenzsetup beobachtete Einstellungen sind **keine Defaults**; pro Kunde/CMP verifizieren.
 6. Manuelle/nicht im JSON abbildbare Schritte immer auflisten: CMP-Template aus der Galerie (Consent Initialization), Meta Access Token, DNS/Proxy, GA4 Key Events/Data Filters/Unwanted Referrals, Cross-Domain falls nicht ueber einen verified Master abgedeckt, Ads-Kundendatenbedingungen. Nie so tun, als enthalte das Import-JSON Kontoeinstellungen ausserhalb von GTM.
-7. Import-Anleitung: Verwaltung → Container importieren → neuer Workspace → Zusammenführen/Konflikte umbenennen. Danach Preview/Tag Assistant bzw. Server Preview; erst nach bestandenem Test veroeffentlichen.
+7. **Vor dem Import jede erzeugte Datei pruefen:** `python3 "${CLAUDE_SKILL_DIR}/scripts/validate_container.py" <datei>.json`. Bei Befunden nicht importieren, sondern korrigieren. Das gilt auch fuer Dateien aus `build_web_container.py` – dessen Selbstpruefung deckt den Web-Fall ab, nicht von Hand ergaenzte oder aus Mastern befuellte Container.
+8. Import-Anleitung: Verwaltung → Container importieren → neuer Workspace → Zusammenführen/Konflikte umbenennen. Danach Preview/Tag Assistant bzw. Server Preview; erst nach bestandenem Test veroeffentlichen.
 
 ## 7. Test & Abnahme (`/meixner-toolkit:tracking-audit test`)
 
