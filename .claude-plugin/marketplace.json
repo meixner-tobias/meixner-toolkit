@@ -7,10 +7,7 @@
   "plugins": [
     {
       "name": "meixner-toolkit",
-      "source": {
-        "source": "github",
-        "repo": "meixner-tobias/meixner-toolkit-test"
-      },
+      "source": "./",
       "description": "Professional SEO, GEO, tracking, GTM and launch toolkit."
     }
   ]
