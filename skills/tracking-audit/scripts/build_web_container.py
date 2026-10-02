@@ -476,6 +476,41 @@ class Builder:
                      [T("html", html), B("supportDocumentWrite", False)],
                      [self.domready_trigger()])
 
+        # Verweildauer-Events: pro Seitenaufruf ein setTimeout je Schwelle.
+        # Bewusst kein GTM-TIMER-Trigger, damit die Schwelle genau einmal feuert.
+        timer_events = p.get("timer_events") or {}
+        if timer_events:
+            if not isinstance(timer_events, dict):
+                raise PlanError(
+                    'timer_events muss ein Objekt sein, z. B. {"engagement_1min": 60}. '
+                    "Schluessel = Eventname, Wert = Sekunden.")
+            zeilen = []
+            for ev in sorted(timer_events):
+                name = need_str("timer_events-Eventname", ev, EVENT_NAME,
+                                "Buchstaben, Ziffern, Unterstrich")
+                sek = timer_events[ev]
+                if not isinstance(sek, int) or isinstance(sek, bool) or not 1 <= sek <= 3600:
+                    raise PlanError(
+                        "timer_events[%s]: Sekunden muessen eine ganze Zahl zwischen 1 und 3600 "
+                        "sein (erhalten: %r)." % (name, sek))
+                zeilen.append("  window.setTimeout(function () { push(%s); }, %d);"
+                              % (js(name), sek * 1000))
+            html = ("<script>\n"
+                    "window.dataLayer = window.dataLayer || [];\n"
+                    "(function () {\n"
+                    "  function push(ev) { window.dataLayer.push({event: ev}); }\n"
+                    + "\n".join(zeilen) + "\n"
+                    "})();\n"
+                    "</script>")
+            self.tag("Listener - Verweildauer", "html",
+                     [T("html", html), B("supportDocumentWrite", False)],
+                     [self.domready_trigger()])
+            self.warnings.append(
+                "timer_events erzeugt Verweildauer-Events (%s). Verweildauer ist ein "
+                "Engagement-Signal, keine Conversion: in Google Ads auf sekundaer lassen, "
+                "sonst optimiert Smart Bidding auf Verweildauer statt auf Anfragen."
+                % ", ".join(sorted(timer_events)))
+
         return {
             "exportFormatVersion": 2,
             "exportTime": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

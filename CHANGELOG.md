@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.15 — 02.10.2026
+
+### Build
+- `build_web_container.py` kennt `timer_events`, z. B. `{"engagement_1min": 60}` (Eventname → Sekunden). Erzeugt je Schwelle ein `setTimeout` pro Seitenaufruf; bewusst kein GTM-TIMER-Trigger, damit jede Schwelle genau einmal feuert.
+- Der Generator warnt dabei, dass Verweildauer ein Engagement-Signal ist und in Google Ads auf sekundaer gehoert. Die Entscheidung bleibt beim Nutzer, die Warnung steht aber in jeder Ausgabe.
+- Abgelehnt werden Nicht-Objekte, Sekunden als Text, Werte ausserhalb 1–3600 und ungueltige Eventnamen.
+- Sieben Regressionstests; Gesamterwartung steigt von 233 auf 240.
+
 ## 0.7.14 — 02.10.2026
 
 ### Build

@@ -459,6 +459,33 @@ def test_builder():
         except gen_mod.PlanError:
             pruefe("link_listeners lehnt ab: " + fall, True)
 
+    # timer_events: Verweildauer-Schwellen als dataLayer-Events.
+    te_plan = {"ga4": {"measurement_id": "G-ABCDEF1234"}, "consent": {"mode": "basic"},
+               "timer_events": {"engagement_1min": 60, "engagement_3min": 180},
+               "events": [{"name": "engagement_1min"}, {"name": "engagement_3min"}]}
+    try:
+        b = gen_mod.Builder(te_plan); out = b.build()
+        tags = [x for x in out["containerVersion"]["tag"] if x["name"] == "Listener - Verweildauer"]
+        htm = [p2["value"] for p2 in tags[0]["parameter"] if p2["key"] == "html"][0] if tags else ""
+        pruefe("timer_events erzeugt genau ein Listener-Tag", len(tags) == 1, len(tags))
+        pruefe("timer_events rechnet Sekunden in Millisekunden um",
+               "60000" in htm and "180000" in htm, htm[:80])
+        pruefe("timer_events warnt vor Engagement als Conversion",
+               any("Engagement-Signal" in w for w in b.warnings), b.warnings)
+    except Exception as e:
+        pruefe("timer_events erzeugt genau ein Listener-Tag", False, repr(e))
+
+    for fall, wert in [("kein Objekt", [60]), ("Sekunden als Text", {"e_x": "60"}),
+                       ("Sekunden ausserhalb des Bereichs", {"e_x": 99999}),
+                       ("ungueltiger Eventname", {"nicht gueltig!": 60})]:
+        try:
+            gen_mod.Builder({"ga4": {"measurement_id": "G-ABCDEF1234"},
+                             "consent": {"mode": "basic"},
+                             "timer_events": wert, "events": []}).build()
+            pruefe("timer_events lehnt ab: " + fall, False, "akzeptiert")
+        except gen_mod.PlanError:
+            pruefe("timer_events lehnt ab: " + fall, True)
+
     boese = [
         ("meta_event mit Code", {"events": [{"name": "e", "meta_event": "L'); alert(1); //"}]}),
         ("value als JS-Ausdruck", {"events": [{"name": "e", "meta_event": "Lead", "value": "1;alert(1)"}]}),
@@ -1009,8 +1036,8 @@ if __name__ == "__main__":
                     print("\nABBRUCH: Testblock %s fehlgeschlagen." % fn.__name__, file=sys.stderr)
                     sys.exit(rc or 1)
         print("\nFull regression: %d/%d bestanden, %d fehlgeschlagen." % (passed, total, failed))
-        if total != 233:
-            print("ABBRUCH: Erwartet wurden 233 Regressionstests, erhalten: %d." % total, file=sys.stderr)
+        if total != 240:
+            print("ABBRUCH: Erwartet wurden 240 Regressionstests, erhalten: %d." % total, file=sys.stderr)
             sys.exit(3)
         sys.exit(0 if failed == 0 and passed == total else 1)
 
