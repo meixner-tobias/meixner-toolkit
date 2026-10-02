@@ -558,6 +558,45 @@ def test_builder():
     pruefe("WEB bekommt keinen Server-container-URL-Hinweis",
            not any("Server container URLs" in x for x in vc.hinweise(web_ok)))
 
+    # ---- build_server_container.py ----
+    srv_mod = modul("skills/tracking-audit/scripts/build_server_container.py", "build_server")
+    srv_plan = {"kunde": "Beispiel", "server_container_url": "https://sgtm.example.test",
+                "ga4": {"measurement_id": "G-ABCDEF1234"},
+                "google_ads": {"conversion_id": "AW-12345678901",
+                               "labels": {"generate_lead": "AbCdEfGhIjKlMnOp"},
+                               "conversion_names": {"generate_lead": "Lead"}},
+                "events": [{"name": "generate_lead", "google_ads": True}]}
+    try:
+        out = srv_mod.build(srv_plan)
+        cv = out["containerVersion"]
+        typen = [t2["type"] for t2 in cv["tag"]]
+        ids = [t2["tagId"] for t2 in cv["tag"]] + [x["triggerId"] for x in cv["trigger"]] + [c["clientId"] for c in cv["client"]]
+        ads = [t2 for t2 in cv["tag"] if t2["type"] == "sgtmadsct"][0]
+        aps = {q["key"]: q["value"] for q in ads["parameter"]}
+        ga4t = [t2 for t2 in cv["tag"] if t2["type"] == "sgtmgaaw"][0]
+        pruefe("Server-Generator erzeugt GA4-Tag, Linker und Ads-Conversion",
+               set(typen) == {"sgtmgaaw", "sgtmadscl", "sgtmadsct"}, typen)
+        pruefe("Server-Generator nutzt den SERVER-Builtin-Trigger",
+               ga4t["firingTriggerId"] == ["2147479574"], ga4t["firingTriggerId"])
+        pruefe("Server-Generator entfernt das AW--Praefix", aps["conversionId"] == "12345678901", aps)
+        pruefe("Server-Generator vergibt IDs aus einem Zaehlraum", len(ids) == len(set(ids)), ids)
+        pruefe("Server-Generat besteht die Containerpruefung", vc.pruefe(out) == [], vc.pruefe(out))
+    except Exception as e:
+        pruefe("Server-Generator erzeugt GA4-Tag, Linker und Ads-Conversion", False, repr(e))
+
+    for fall, mut in [
+        ("Ads-Event ohne Label", lambda p2: p2["google_ads"].pop("labels")),
+        ("fehlende Measurement ID", lambda p2: p2["ga4"].pop("measurement_id")),
+        ("ungueltiger Eventname", lambda p2: p2["events"].__setitem__(0, {"name": "nicht gueltig!"})),
+    ]:
+        import copy as _c
+        bad = _c.deepcopy(srv_plan); mut(bad)
+        try:
+            srv_mod.build(bad)
+            pruefe("Server-Generator lehnt ab: " + fall, False, "akzeptiert")
+        except srv_mod.PlanError:
+            pruefe("Server-Generator lehnt ab: " + fall, True)
+
     boese = [
         ("meta_event mit Code", {"events": [{"name": "e", "meta_event": "L'); alert(1); //"}]}),
         ("value als JS-Ausdruck", {"events": [{"name": "e", "meta_event": "Lead", "value": "1;alert(1)"}]}),
@@ -1108,8 +1147,8 @@ if __name__ == "__main__":
                     print("\nABBRUCH: Testblock %s fehlgeschlagen." % fn.__name__, file=sys.stderr)
                     sys.exit(rc or 1)
         print("\nFull regression: %d/%d bestanden, %d fehlgeschlagen." % (passed, total, failed))
-        if total != 254:
-            print("ABBRUCH: Erwartet wurden 254 Regressionstests, erhalten: %d." % total, file=sys.stderr)
+        if total != 262:
+            print("ABBRUCH: Erwartet wurden 262 Regressionstests, erhalten: %d." % total, file=sys.stderr)
             sys.exit(3)
         sys.exit(0 if failed == 0 and passed == total else 1)
 

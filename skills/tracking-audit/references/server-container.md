@@ -38,14 +38,18 @@ Richtig: durchzaehlen ueber alle drei Arten hinweg.
 | `gaaw_client` | GA4-Client, nimmt Requests an | core-candidate |
 | `sgtmadscl` | Server Conversion Linker | core-candidate + production-reference |
 | `sgtmadsct` | Google-Ads-Conversion serverseitig | production-reference (6x) |
+| `sgtmgaaw` | GA4-Tag, reicht vom Client an GA4 weiter | Re-Export eines real gebauten Containers, 10/2026 |
 
 Parameter von `sgtmadsct`: `conversionId`, `conversionLabel`, `conversionValue`,
 `currencyCode`, `enableConversionLinker`, `enableNewCustomerReporting`,
 `enableProductReporting`, `rdp`.
 
-**Nicht belegt und deshalb nicht generierbar:** der GA4-Tag, der die Requests vom
-Client an GA4 weiterreicht. In GTM von Hand anlegen über *Tag → Google Analytics:
-GA4*, Auslöser „Alle Events". Keinen Typschluessel dafuer erfinden.
+Parameter von `sgtmgaaw`: `measurementId`, `epToIncludeDropdown` (`all`),
+`upToIncludeDropdown` (`all`), `isMeasurementIdMandatory`, `redactVisitorIp`.
+Ausloeser: der eingebaute `2147479574`, damit auch `page_view` weitergereicht wird.
+
+`cvt_*`-Typen bleiben ausgeschlossen: Community-Templates haben containerspezifische
+IDs. Meta CAPI und Stape-Power-ups deshalb weiterhin in GTM ergaenzen.
 
 `cvt_*`-Typen aus der production-reference sind Community-Templates. Ihre IDs
 gelten nur im Ursprungscontainer und duerfen nie uebernommen werden.

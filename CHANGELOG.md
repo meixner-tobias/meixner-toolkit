@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.18 — 02.10.2026
+
+### Server-Container werden generiert statt zusammengesetzt
+- Neu: `scripts/build_server_container.py`. Erzeugt aus demselben `plan.json` wie der Web-Generator GA4-Client (`gaaw_client`), GA4-Tag (`sgtmgaaw`), Server Conversion Linker (`sgtmadscl`) und je eine Ads-Conversion (`sgtmadsct`) pro Event mit Label. Selbstpruefung ueber `validate_container.py` eingebaut.
+- Das `AW-`-Praefix wird automatisch entfernt: der Servertag erwartet die nackte Kontonummer, die Browser-Schreibweise fuehrt zum Importfehler.
+- IDs kommen aus einem gemeinsamen Zaehlraum fuer Tags, Trigger und Clients.
+- Ein Ads-Event ohne Conversion-Label bricht den Build ab, statt ein Tag ohne Ziel zu erzeugen.
+- `sgtmgaaw` ist damit belegt: der Typschluessel stammt aus dem Re-Export eines real gebauten Containers. Das Generat wurde gegen diesen Export verglichen und ist in Typen, Parametern, Ausloesern und Client deckungsgleich.
+- `SKILL.md` Schritt 3 verweist auf den Generator; von Hand zusammensetzen ist ausdruecklich ausgeschlossen.
+- Community-Templates (`cvt_*`) bleiben ausgenommen: ihre IDs gelten nur im Ursprungscontainer. Meta CAPI und Stape-Power-ups weiterhin in GTM ergaenzen.
+
+- Acht Regressionstests; Gesamterwartung steigt von 254 auf 262.
+
 ## 0.7.17 — 02.10.2026
 
 ### Container-Einstellungen
