@@ -1,6 +1,6 @@
 {
   "name": "meixner-toolkit",
-  "version": "0.7.11",
+  "version": "0.7.12",
   "description": "Werkzeuge für Web- und Tracking-Projekte: Auftragsstart, SEO/GEO-Audit (mit SiteOne Crawler als Crawl-Engine), Tracking-Audit & GTM-Import (GA4, Google Ads, Meta CAPI, Consent Mode v2, Stape), Go-Live-Abnahme, Kundenbericht als interaktive HTML-Seite im eigenen Website-Design (PDF auf Wunsch), Setup-Check und Wissens-Updates.",
   "author": {
     "name": "Tobias Meixner"

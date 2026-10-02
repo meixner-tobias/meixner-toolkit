@@ -45,7 +45,7 @@ Der Bericht ist ein **Brief von Tobias**, kein Dashboard. Er soll neugierig mach
 10. Gruß, Unterschrift, Kontakt, Kleingedrucktes (keine Garantien, keine Rechtsberatung)
 
 ## Gestaltung
-Folgt meixner-tobias.com, damit der Bericht erkennbar von Tobias kommt (Stand 09/2026, ausgelesen aus den CSS-Variablen der Website):
+Das Berichtslayout ist das Design-System des Plugins (Stand 09/2026). Die Absenderangaben kommen aus `config.json → branding`, der Bericht trägt also immer die Identität des jeweiligen Nutzers:
 - Schrift: **Archivo** (Überschriften, Titel, Labels; Gewicht 580, Laufweite eng) und **Newsreader** (Fließtext) – beide OFL, als statische Schnitte eingebettet.
 - Farben: Ink `#0c1315` (Bildschirmhintergrund, Überschriften), Papier `#faf8f3`, Text `#14191a`, Grau `#4e5658`, Linien `#ded7c9`/`#c6bdad`, Signal `#7d5310` (Amber auf Papier), Dringend `#a8341f`.
 - Kanten quadratisch (2 px), Haarlinien statt Kästen, Signallinie oben am Blatt. Eigene Farbe über `config.json → branding.farbe` möglich.

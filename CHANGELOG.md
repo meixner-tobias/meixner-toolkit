@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.12 — 02.10.2026
+
+### Auslieferung an fremde Nutzer
+- `skills/setup/examples/config.json` ist jetzt eine leere Vorlage. Vorher enthielt sie die Brandingdaten und Preise des Autors; eine Neuinstallation startete damit unter fremdem Namen, und ein ungeprueft erzeugter Kundenbericht konnte mit falschem Absender beim Kunden landen.
+- `/setup init` belegt Angebotstexte und Preise nicht mehr vor. Beide kommen ausschliesslich vom Nutzer.
+- Der Gestaltungsabschnitt des Kundenberichts beschreibt das Layout als Design-System des Plugins; die Absenderangaben stammen aus `config.json → branding`.
+- Keine Verhaltensaenderung fuer bestehende Installationen: `--init` ueberschreibt eine vorhandene `config.json` nicht.
+
 ## 0.7.11 — 16.09.2026
 
 ### Fachwissen / Entscheidungsqualitaet

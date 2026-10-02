@@ -29,7 +29,7 @@ Läuft die Session in Cowork ohne Home-Verzeichnis-Zugriff: nach einem verbunden
 
 ## Init
 1. `doctor.py --init` legt Ordner und `config.json` an (überschreibt nichts).
-2. Per AskUserQuestion abfragen, was fehlt: Branding (Name, Firma, Website, E-Mail, Telefon, Farbe als Hex, Logo-Pfad/URL), Angebotstexte, Standards (CMP, Consent Mode Basic/Advanced, sGTM-Hosting, Domain-Variante, backup_gclid ja/nein). Vorbelegung für Angebot aus meixner-tobias.com: GTM & GA4 Setup ab 390 €, Website-Umsetzung ab 890 €, Sorglos-Betreuung ab 49 €/Monat – vor dem Speichern bestätigen lassen.
+2. Per AskUserQuestion abfragen, was fehlt: Branding (Name, Firma, Website, E-Mail, Telefon, Farbe als Hex, Logo-Pfad/URL), Angebotstexte, Standards (CMP, Consent Mode Basic/Advanced, sGTM-Hosting, Domain-Variante, backup_gclid ja/nein). Angebotstexte und Preise kommen ausschließlich vom Nutzer – nie vorbelegen, nie aus dem Gedächtnis ergänzen; `examples/config.json` ist eine leere Vorlage. Vor dem Speichern alles bestätigen lassen.
 3. Werte mit einem kleinen Python-Schreibvorgang in `config.json` speichern (JSON gültig halten), danach Check erneut.
 
 ## Kunde
